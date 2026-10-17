@@ -1,0 +1,14 @@
+# Java / Maven
+target/
+
+# Node / React
+node_modules/
+dist/
+
+# Banco SQLite local
+*.db
+
+# IDEs e segredos
+.idea/
+.vscode/
+.env
