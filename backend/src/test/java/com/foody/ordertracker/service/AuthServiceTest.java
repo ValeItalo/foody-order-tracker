@@ -1,11 +1,16 @@
 package com.foody.ordertracker.service;
 
+import com.foody.ordertracker.dto.LoginRequest;
 import com.foody.ordertracker.dto.RegisterRequest;
+import com.foody.ordertracker.dto.TokenResponse;
 import com.foody.ordertracker.dto.UserResponse;
 import com.foody.ordertracker.entity.User;
 import com.foody.ordertracker.exception.EmailAlreadyInUseException;
+import com.foody.ordertracker.exception.InvalidCredentialsException;
 import com.foody.ordertracker.repository.UserRepository;
+import com.foody.ordertracker.security.JwtService;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,6 +35,7 @@ class AuthServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
+    @Mock JwtService jwtService;
     @InjectMocks AuthService authService;
 
     @Test
@@ -79,5 +87,46 @@ class AuthServiceTest {
         // When / Then
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(EmailAlreadyInUseException.class);
+    }
+
+    @Nested
+    @DisplayName("login")
+    class Login {
+
+        @Test
+        @DisplayName("com credenciais corretas devolve token Bearer")
+        void shouldReturnTokenWhenCredentialsAreValid() {
+            var user = new User("Ana", "ana@foody.com", "hash-bcrypt");
+            when(userRepository.findByEmail("ana@foody.com")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("senha1234", "hash-bcrypt")).thenReturn(true);
+            when(jwtService.generateToken("ana@foody.com")).thenReturn("token-jwt");
+
+            TokenResponse response = authService.login(new LoginRequest("  ANA@foody.com ", "senha1234"));
+
+            assertThat(response.token()).isEqualTo("token-jwt");
+            assertThat(response.type()).isEqualTo("Bearer");
+        }
+
+        @Test
+        @DisplayName("com e-mail inexistente lança InvalidCredentialsException")
+        void shouldRejectUnknownEmail() {
+            when(userRepository.findByEmail("ana@foody.com")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> authService.login(new LoginRequest("ana@foody.com", "senha1234")))
+                    .isInstanceOf(InvalidCredentialsException.class);
+            verify(jwtService, never()).generateToken(any());
+        }
+
+        @Test
+        @DisplayName("com senha errada lança InvalidCredentialsException")
+        void shouldRejectWrongPassword() {
+            var user = new User("Ana", "ana@foody.com", "hash-bcrypt");
+            when(userRepository.findByEmail("ana@foody.com")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("errada123", "hash-bcrypt")).thenReturn(false);
+
+            assertThatThrownBy(() -> authService.login(new LoginRequest("ana@foody.com", "errada123")))
+                    .isInstanceOf(InvalidCredentialsException.class);
+            verify(jwtService, never()).generateToken(any());
+        }
     }
 }
