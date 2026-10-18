@@ -17,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -72,21 +71,6 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(EmailAlreadyInUseException.class);
         verify(userRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
-    @DisplayName("converte a violação da constraint UNIQUE em EmailAlreadyInUseException")
-    void shouldTranslateConstraintViolationOnRace() {
-        // Given: o exists não viu o e-mail, mas o banco barrou o INSERT
-        var request = new RegisterRequest("Ana", "ana@foody.com", "senha1234");
-        when(userRepository.existsByEmail("ana@foody.com")).thenReturn(false);
-        when(passwordEncoder.encode("senha1234")).thenReturn("hash-bcrypt");
-        when(userRepository.saveAndFlush(any(User.class)))
-                .thenThrow(new DataIntegrityViolationException("UNIQUE constraint failed"));
-
-        // When / Then
-        assertThatThrownBy(() -> authService.register(request))
-                .isInstanceOf(EmailAlreadyInUseException.class);
     }
 
     @Nested

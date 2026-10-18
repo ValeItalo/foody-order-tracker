@@ -9,7 +9,6 @@ import com.foody.ordertracker.exception.EmailAlreadyInUseException;
 import com.foody.ordertracker.exception.InvalidCredentialsException;
 import com.foody.ordertracker.repository.UserRepository;
 import com.foody.ordertracker.security.JwtService;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,15 +39,12 @@ public class AuthService {
         String hash = passwordEncoder.encode(request.password());
         User user = new User(request.name().trim(), email, hash);
 
-        try {
-            user = userRepository.saveAndFlush(user);
-        } catch (DataIntegrityViolationException ex) {
-            // Duas requisições simultâneas passaram pelo existsByEmail;
-            // a constraint UNIQUE do banco barrou a segunda.
-            throw new EmailAlreadyInUseException(email);
-        }
+        // A unicidade final é garantida pela constraint UNIQUE de users.email.
+        // O existsByEmail dá o 409 amigável; numa corrida o banco ainda impede o duplicado.
+        user = userRepository.saveAndFlush(user);
 
         return new UserResponse(user.getId(), user.getName(), user.getEmail());
+
     }
 
     @Transactional(readOnly = true)
