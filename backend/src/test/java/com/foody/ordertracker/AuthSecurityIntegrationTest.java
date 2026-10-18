@@ -31,14 +31,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Autenticação e proteção de rotas (HTTP + SQLite)")
 class AuthSecurityIntegrationTest {
 
-    private static final String PROTECTED_PATH = "/rota-que-nao-existe";
+    private static final String PROTECTED_PATH = "/orders";
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository userRepository;
 
     @BeforeEach
     void cleanUsers() {
-        // Banco isolado em target/, e nenhum pedido é commitado nesta classe.
+        // Banco isolado em target/. Esta classe não grava pedidos; a classe de pedidos limpa os seus.
         userRepository.deleteAll();
     }
 
@@ -143,13 +143,14 @@ class AuthSecurityIntegrationTest {
         }
 
         @Test
-        @DisplayName("token válido, então passa pela segurança (404 da rota inexistente, não 401)")
+        @DisplayName("token válido, então passa pela segurança (200 em GET /orders, não 401)")
         void shouldPassSecurityWithValidToken() throws Exception {
             String token = registerAndLogin("ana@foody.com", "senha-segura-1");
 
             mockMvc.perform(get(PROTECTED_PATH)
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray());
         }
 
         @Test
