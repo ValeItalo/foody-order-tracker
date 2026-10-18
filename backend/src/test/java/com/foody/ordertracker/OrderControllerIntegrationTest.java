@@ -330,5 +330,21 @@ class OrderControllerIntegrationTest {
                     .andExpect(jsonPath("$[0].customerName").value("Mais Novo"))
                     .andExpect(jsonPath("$[1].customerName").value("Mais Antigo"));
         }
+
+        @Test
+        @DisplayName("?status com valor inválido, então 400 padronizado listando os valores aceitos")
+        void shouldReturn400ForInvalidStatus() throws Exception {
+            String token = authenticate();
+
+            String body = mockMvc.perform(get("/orders")
+                            .param("status", "INVALIDO")
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andReturn().getResponse().getContentAsString();
+
+            String message = JsonPath.read(body, "$.message");
+            assertThat(message).contains("status", "INVALIDO", "EM_PREPARO");
+        }
     }
 }
