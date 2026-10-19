@@ -439,4 +439,49 @@ class OrderControllerIntegrationTest {
                     .andExpect(jsonPath("$.status").value(401));
         }
     }
+    @Nested
+    @DisplayName("Corpo inválido no PATCH")
+    class InvalidPatchBody {
+
+        private String patchExpecting400(String token, String json) throws Exception {
+            int id = createOrder(token);
+            String body = mockMvc.perform(patch("/orders/{id}/status", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andReturn().getResponse().getContentAsString();
+            return JsonPath.read(body, "$.message");
+        }
+
+        @Test
+        @DisplayName("status inexistente no corpo, então 400 padronizado")
+        void shouldReturn400ForUnknownStatusValue() throws Exception {
+            String token = authenticate();
+
+            String message = patchExpecting400(token, "{\"status\":\"XYZ\"}");
+
+            assertThat(message).isNotBlank();
+        }
+
+        @Test
+        @DisplayName("JSON malformado, então 400 padronizado")
+        void shouldReturn400ForMalformedJson() throws Exception {
+            String token = authenticate();
+
+            String message = patchExpecting400(token, "{\"status\":");
+
+            assertThat(message).isNotBlank();
+        }
+
+        @Test
+        @DisplayName("status ausente ou nulo, então 400 citando status")
+        void shouldReturn400ForMissingStatus() throws Exception {
+            String token = authenticate();
+
+            assertThat(patchExpecting400(token, "{}")).contains("status");
+            assertThat(patchExpecting400(token, "{\"status\":null}")).contains("status");
+        }
+    }
 }

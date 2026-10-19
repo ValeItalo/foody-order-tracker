@@ -2,6 +2,7 @@ package com.foody.ordertracker.exception;
 
 import com.foody.ordertracker.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -53,6 +54,11 @@ public class GlobalExceptionHandler {
                     .collect(Collectors.joining(", "));
         }
         return build(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido ou malformado");
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {
