@@ -5,6 +5,7 @@ import com.foody.ordertracker.dto.OrderItemRequest;
 import com.foody.ordertracker.entity.Order;
 import com.foody.ordertracker.entity.OrderStatus;
 import com.foody.ordertracker.entity.User;
+import com.foody.ordertracker.exception.InvalidStatusTransitionException;
 import com.foody.ordertracker.exception.OrderNotFoundException;
 import com.foody.ordertracker.repository.OrderRepository;
 import org.springframework.stereotype.Service;
@@ -46,5 +47,16 @@ public class OrderService {
     public Order findById(Long id) {
         return orderRepository.findWithItemsById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+
+
+    @Transactional
+    public Order updateStatus(Long id, OrderStatus newStatus) {
+        Order order = findById(id);
+        if (!order.getStatus().canTransitionTo(newStatus)) {
+            throw new InvalidStatusTransitionException(order.getStatus(), newStatus);
+        }
+        order.updateStatus(newStatus);
+        return order;
     }
 }

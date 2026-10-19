@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -345,6 +346,142 @@ class OrderControllerIntegrationTest {
 
             String message = JsonPath.read(body, "$.message");
             assertThat(message).contains("status", "INVALIDO", "EM_PREPARO");
+        }
+    }
+    @Nested
+    @DisplayName("Atualização de status")
+    class UpdateStatus {
+
+        private static final String TO_PREPARING = "{\"status\":\"EM_PREPARO\"}";
+
+        @Test
+        @DisplayName("transição válida, então 200 com o novo status, persistido")
+        void shouldUpdateStatusAndPersist() throws Exception {
+            String token = authenticate();
+            int id = createOrder(token);
+
+            mockMvc.perform(patch("/orders/{id}/status", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(TO_PREPARING))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(id))
+                    .andExpect(jsonPath("$.status").value("EM_PREPARO"))
+                    .andExpect(jsonPath("$.items.length()").value(2));
+
+            // Prova que gravou no banco (dirty checking), e não só na resposta.
+            mockMvc.perform(get("/orders/{id}", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("EM_PREPARO"));
+        }
+
+        @Test
+        @DisplayName("pulo de etapa, então 409 citando origem e destino, e o status não muda")
+        void shouldReturn409ForSkippedStep() throws Exception {
+            String token = authenticate();
+            int id = createOrder(token);
+
+            String body = mockMvc.perform(patch("/orders/{id}/status", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"status\":\"ENTREGUE\"}"))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.status").value(409))
+                    .andReturn().getResponse().getContentAsString();
+
+            String message = JsonPath.read(body, "$.message");
+            assertThat(message).contains("RECEBIDO", "ENTREGUE");
+
+            mockMvc.perform(get("/orders/{id}", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                    .andExpect(jsonPath("$.status").value("RECEBIDO"));
+        }
+
+        @Test
+        @DisplayName("mesmo status repetido, então 409")
+        void shouldReturn409ForSameStatus() throws Exception {
+            String token = authenticate();
+            int id = createOrder(token);
+
+            mockMvc.perform(patch("/orders/{id}/status", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"status\":\"RECEBIDO\"}"))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.status").value(409));
+        }
+
+        @Test
+        @DisplayName("pedido inexistente, então 404 padronizado citando o ID")
+        void shouldReturn404ForUnknownOrder() throws Exception {
+            String token = authenticate();
+
+            String body = mockMvc.perform(patch("/orders/{id}/status", 999999)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(TO_PREPARING))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andReturn().getResponse().getContentAsString();
+
+            String message = JsonPath.read(body, "$.message");
+            assertThat(message).contains("999999");
+        }
+
+        @Test
+        @DisplayName("sem token, então 401")
+        void shouldReturn401WithoutToken() throws Exception {
+            mockMvc.perform(patch("/orders/{id}/status", 1)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(TO_PREPARING))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.status").value(401));
+        }
+    }
+    @Nested
+    @DisplayName("Corpo inválido no PATCH")
+    class InvalidPatchBody {
+
+        private String patchExpecting400(String token, String json) throws Exception {
+            int id = createOrder(token);
+            String body = mockMvc.perform(patch("/orders/{id}/status", id)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andReturn().getResponse().getContentAsString();
+            return JsonPath.read(body, "$.message");
+        }
+
+        @Test
+        @DisplayName("status inexistente no corpo, então 400 padronizado")
+        void shouldReturn400ForUnknownStatusValue() throws Exception {
+            String token = authenticate();
+
+            String message = patchExpecting400(token, "{\"status\":\"XYZ\"}");
+
+            assertThat(message).isNotBlank();
+        }
+
+        @Test
+        @DisplayName("JSON malformado, então 400 padronizado")
+        void shouldReturn400ForMalformedJson() throws Exception {
+            String token = authenticate();
+
+            String message = patchExpecting400(token, "{\"status\":");
+
+            assertThat(message).isNotBlank();
+        }
+
+        @Test
+        @DisplayName("status ausente ou nulo, então 400 citando status")
+        void shouldReturn400ForMissingStatus() throws Exception {
+            String token = authenticate();
+
+            assertThat(patchExpecting400(token, "{}")).contains("status");
+            assertThat(patchExpecting400(token, "{\"status\":null}")).contains("status");
         }
     }
 }
