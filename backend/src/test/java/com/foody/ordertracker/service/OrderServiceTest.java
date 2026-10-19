@@ -5,6 +5,7 @@ import com.foody.ordertracker.dto.OrderItemRequest;
 import com.foody.ordertracker.entity.Order;
 import com.foody.ordertracker.entity.OrderStatus;
 import com.foody.ordertracker.entity.User;
+import com.foody.ordertracker.exception.InvalidStatusTransitionException;
 import com.foody.ordertracker.exception.OrderNotFoundException;
 import com.foody.ordertracker.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
@@ -96,5 +97,37 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.findById(99L))
                 .isInstanceOf(OrderNotFoundException.class)
                 .hasMessageContaining("99");
+    }
+
+    @Test
+    void updateStatusChangesStatusWhenTransitionIsValid() {
+        Order order = new Order(user, "Joao", "Rua A");
+        when(orderRepository.findWithItemsById(1L)).thenReturn(Optional.of(order));
+
+        Order result = orderService.updateStatus(1L, OrderStatus.EM_PREPARO);
+
+        assertThat(result).isSameAs(order);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.EM_PREPARO);
+    }
+
+    @Test
+    void updateStatusRejectsInvalidTransitionAndKeepsCurrentStatus() {
+        Order order = new Order(user, "Joao", "Rua A");
+        when(orderRepository.findWithItemsById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.ENTREGUE))
+                .isInstanceOf(InvalidStatusTransitionException.class)
+                .hasMessageContaining("RECEBIDO")
+                .hasMessageContaining("ENTREGUE");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.RECEBIDO);
+    }
+
+    @Test
+    void updateStatusThrowsWhenOrderDoesNotExist() {
+        when(orderRepository.findWithItemsById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.updateStatus(99L, OrderStatus.EM_PREPARO))
+                .isInstanceOf(OrderNotFoundException.class);
     }
 }
