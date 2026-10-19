@@ -1,12 +1,16 @@
-import { Button, Container, Typography } from '@mui/material'
+import { Navigate, Route, Routes } from 'react-router'
+import LoginPage from './pages/LoginPage'
+import OrdersPage from './pages/OrdersPage'
+import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
   return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Foody Order Tracker
-      </Typography>
-      <Button variant="contained">Teste</Button>
-    </Container>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/orders" element={<OrdersPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/orders" replace />} />
+    </Routes>
   )
 }
