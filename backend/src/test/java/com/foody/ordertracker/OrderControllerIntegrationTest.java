@@ -205,6 +205,22 @@ class OrderControllerIntegrationTest {
                     .andExpect(jsonPath("$.id").value(id))
                     .andExpect(jsonPath("$.items.length()").value(2));
         }
+
+        @Test
+        @DisplayName("ID que não é número, então 400 padronizado sem lista de valores aceitos")
+        void shouldReturn400ForNonNumericId() throws Exception {
+            String token = authenticate();
+
+            String body = mockMvc.perform(get("/orders/{id}", "abc")
+                            .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andReturn().getResponse().getContentAsString();
+
+            String message = JsonPath.read(body, "$.message");
+            assertThat(message).contains("'id'", "abc");
+            assertThat(message).doesNotContain("Valores aceitos");
+        }
     }
 
     @Nested

@@ -143,6 +143,14 @@ class AuthSecurityIntegrationTest {
         }
 
         @Test
+        @DisplayName("header Authorization com esquema diferente de Bearer, então 401")
+        void shouldReturn401ForNonBearerScheme() throws Exception {
+            mockMvc.perform(get(PROTECTED_PATH)
+                            .header(HttpHeaders.AUTHORIZATION, "Basic dXNlcjpzZW5oYQ=="))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
         @DisplayName("token válido, então passa pela segurança (200 em GET /orders, não 401)")
         void shouldPassSecurityWithValidToken() throws Exception {
             String token = registerAndLogin("ana@foody.com", "senha-segura-1");
