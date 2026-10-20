@@ -33,6 +33,7 @@ import {
 import NewOrderDrawer from '../orders/NewOrderDrawer';
 import OrderDetailsDrawer from '../orders/OrderDetailsDrawer';
 
+const POLL_INTERVAL_MS = 10_000;
 type Filter = 'TODOS' | OrderStatus;
 
 export default function OrdersPage() {
@@ -45,30 +46,36 @@ export default function OrdersPage() {
   const [selectedId, setSelectedId] = useState<Order['id'] | null>(null);
   const selectedOrder = orders.find((order) => order.id === selectedId) ?? null;
 
-  useEffect(() => {
-    let cancelled = false;
+useEffect(() => {
+  let cancelled = false;
 
-    listOrders()
-      .then((data) => {
-        if (!cancelled) setOrders(data);
-      })
-      .catch((err: unknown) => {
-        if (err instanceof ApiError && err.status === 401) {
-          signOut(); // token expirado ou inválido: volta ao login
-          return;
-        }
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Erro inesperado.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  async function load(isFirstLoad: boolean) {
+    try {
+      const data = await listOrders();
+      if (cancelled) return;
+      setOrders(data);
+      setError(null);
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        signOut(); // token expirado ou inválido: volta ao login
+        return;
+      }
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : 'Erro inesperado.');
+      }
+    } finally {
+      if (!cancelled && isFirstLoad) setLoading(false);
+    }
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [signOut]);
+  void load(true);
+  const timer = setInterval(() => void load(false), POLL_INTERVAL_MS);
+
+  return () => {
+    cancelled = true;
+    clearInterval(timer);
+  };
+}, [signOut]);
 
   const countOf = (status: OrderStatus) =>
     orders.filter((order) => order.status === status).length;
