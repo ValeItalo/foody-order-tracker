@@ -12,3 +12,13 @@ export function createOrder(data: CreateOrderRequest): Promise<Order> {
     body: JSON.stringify(data),
   });
 }
+
+export function updateOrderStatus(
+  id: Order['id'],
+  status: OrderStatus,
+): Promise<Order> {
+  return request<Order>(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}

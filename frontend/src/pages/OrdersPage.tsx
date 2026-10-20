@@ -31,6 +31,7 @@ import {
   itemsLabel,
 } from '../orders/display';
 import NewOrderDrawer from '../orders/NewOrderDrawer';
+import OrderDetailsDrawer from '../orders/OrderDetailsDrawer';
 
 type Filter = 'TODOS' | OrderStatus;
 
@@ -41,6 +42,8 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('TODOS');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<Order['id'] | null>(null);
+  const selectedOrder = orders.find((order) => order.id === selectedId) ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +158,12 @@ export default function OrdersPage() {
                     </TableRow>
                   ) : (
                     visible.map((order) => (
-                      <TableRow key={order.id} hover>
+                      <TableRow
+                        key={order.id}
+                        hover
+                        onClick={() => setSelectedId(order.id)}
+                        sx={{ cursor: 'pointer' }}
+                        >
                         <TableCell>#{order.id}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
                         <TableCell>{order.deliveryAddress}</TableCell>
@@ -181,6 +189,15 @@ export default function OrdersPage() {
   open={drawerOpen}
   onClose={() => setDrawerOpen(false)}
   onCreated={(order) => setOrders((prev) => [order, ...prev])}
+/>
+<OrderDetailsDrawer
+  order={selectedOrder}
+  onClose={() => setSelectedId(null)}
+  onUpdated={(updated) =>
+    setOrders((prev) =>
+      prev.map((order) => (order.id === updated.id ? updated : order)),
+    )
+  }
 />
     </>
   );
