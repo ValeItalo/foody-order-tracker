@@ -30,6 +30,7 @@ import {
   formatDateTime,
   itemsLabel,
 } from '../orders/display';
+import NewOrderDrawer from '../orders/NewOrderDrawer';
 
 type Filter = 'TODOS' | OrderStatus;
 
@@ -39,6 +40,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('TODOS');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,9 +89,21 @@ export default function OrdersPage() {
       </AppBar>
 
       <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Typography variant="h5" component="h1" gutterBottom>
-          Pedidos
-        </Typography>
+        <Box
+  sx={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    mb: 2,
+  }}
+>
+  <Typography variant="h5" component="h1">
+    Pedidos
+  </Typography>
+  <Button variant="contained" onClick={() => setDrawerOpen(true)}>
+    Novo pedido
+  </Button>
+</Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -163,6 +177,11 @@ export default function OrdersPage() {
           </>
         )}
       </Container>
+      <NewOrderDrawer
+  open={drawerOpen}
+  onClose={() => setDrawerOpen(false)}
+  onCreated={(order) => setOrders((prev) => [order, ...prev])}
+/>
     </>
   );
 }
