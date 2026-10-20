@@ -1,15 +1,27 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router'
-import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material'
+import { Link as RouterLink, Navigate, useLocation } from 'react-router'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Link,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 
 export default function LoginPage() {
   const { isAuthenticated, signIn } = useAuth()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const justRegistered =
+    (location.state as { registered?: boolean } | null)?.registered === true
 
   if (isAuthenticated) {
     return <Navigate to="/orders" replace />
@@ -37,6 +49,11 @@ export default function LoginPage() {
         Entre para acompanhar os pedidos.
       </Typography>
       <Box component="form" onSubmit={handleSubmit} noValidate>
+        {justRegistered && !error && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Cadastro realizado! Entre com seu e-mail e senha.
+          </Alert>
+        )}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -71,6 +88,12 @@ export default function LoginPage() {
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </Button>
+        <Typography sx={{ mt: 2 }} align="center">
+          Não tem conta?{' '}
+          <Link component={RouterLink} to="/register">
+            Cadastre-se
+          </Link>
+        </Typography>
       </Box>
     </Container>
   )
