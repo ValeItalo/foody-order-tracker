@@ -157,7 +157,9 @@ cd backend
 .\mvnw test
 ```
 
-São 80 testes entre unitários (regras de status, serviços, JWT) e de integração (endpoints, segurança e persistência). A máquina de estados do status e a API foram desenvolvidas com TDD.
+São 82 testes entre unitários (regras de status, serviços, JWT) e de integração (endpoints, segurança e persistência). A máquina de estados do status e a API foram desenvolvidas com TDD.
+
+Ao rodar `mvnw test`, o JaCoCo gera o relatório de cobertura em `backend/target/site/jacoco/index.html` (a pasta `target/` não é versionada). Na última medição: 98% das instruções e 97% dos branches.
 
 O front-end não tem testes automatizados; a qualidade é verificada com `npm run lint` e `npm run build`.
 
