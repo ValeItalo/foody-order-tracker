@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Falso positivo: o ObjectMapper e um bean singleton compartilhado, injetado pelo Spring.
+         Guardar a referencia e o uso esperado; copia-lo nao faz sentido. -->
+    <Match>
+        <Class name="com.foody.ordertracker.security.RestAuthenticationEntryPoint"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

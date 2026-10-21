@@ -16,6 +16,11 @@ public record OrderResponse(
         List<OrderItemResponse> items
 ) {
 
+    public OrderResponse {
+        // Cópia imutável da lista (SpotBugs EI_EXPOSE_REP).
+        items = List.copyOf(items);
+    }
+
     public static OrderResponse from(Order order) {
         return new OrderResponse(
                 order.getId(),
