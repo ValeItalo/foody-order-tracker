@@ -10,6 +10,32 @@ Mini rastreador de pedidos de delivery: cadastro e login de usuários, criação
 - Detalhes do pedido com botão para avançar o status e opção de cancelar.
 - Atualização automática da lista a cada 10 segundos (polling).
 
+## Telas do Sistema
+
+### Lista de pedidos
+<p>
+  <img src="docs/images/pedidos.png" width="480px" alt="Lista de pedidos">
+</p>
+
+### Novo pedido
+<p>
+  <img src="docs/images/novo-pedido.png" width="480px" alt="Novo pedido">
+</p>
+
+### Detalhes do pedido
+<p>
+  <img src="docs/images/detalhes.png" width="480px" alt="Detalhes do pedido">
+</p>
+
+### Login
+<p>
+  <img src="docs/images/login.png" width="300px" alt="Login">
+</p>
+
+### Cadastro
+<p>
+  <img src="docs/images/cadastro.png" width="300px" alt="Cadastro">
+</p>
 ## Stack
 
 | Camada | Tecnologias |
