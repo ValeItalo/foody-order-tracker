@@ -253,6 +253,18 @@ class OrderControllerIntegrationTest {
         }
 
         @Test
+        @DisplayName("campo items ausente, então 400 citando items")
+        void shouldRejectMissingItems() throws Exception {
+            String token = authenticate();
+
+            String message = postExpecting400(token, """
+                    {"customerName":"Maria","deliveryAddress":"Rua A, 100"}
+                    """);
+
+            assertThat(message).contains("items");
+        }
+
+        @Test
         @DisplayName("quantidade zero em um item, então 400 citando items[0].quantity")
         void shouldRejectZeroQuantity() throws Exception {
             String token = authenticate();
