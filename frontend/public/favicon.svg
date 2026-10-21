@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <!-- Fundo com cantos levemente arredondados para um visual moderno de ícone -->
+  <rect width="100" height="100" rx="22" fill="#E51920" />
+
+  <g transform="translate(18, 22)">
+    <!-- Letra F em estilo Bold/Robusto em tom branco -->
+    <path d="M 0 0 H 30 V 10 H 10 V 22 H 24 V 32 H 10 V 56 H 0 Z" fill="#FFFFFF" />
+
+    <!-- Fluxo de Gerenciamento / Acompanhamento de Pedidos conectado à barra do F -->
+    <!-- Linha conectora -->
+    <line x1="30" y1="5" x2="60" y2="5" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+    
+    <!-- Etapa 1: Em Preparo -->
+    <circle cx="38" cy="5" r="4.5" fill="#FF8A8A" />
+    
+    <!-- Etapa 2: Saiu para Entrega -->
+    <circle cx="49" cy="5" r="4.5" fill="#FF8A8A" />
+    
+    <!-- Etapa 3: Entregue (Destaque) -->
+    <circle cx="60" cy="5" r="6.5" fill="#FFFFFF" />
+    <path d="M 57.5 5 L 59.5 7 L 62.5 3.5" stroke="#E51920" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+</svg>
