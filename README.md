@@ -15,7 +15,7 @@ Mini rastreador de pedidos de delivery: cadastro e login de usuários, criação
 | Camada | Tecnologias |
 | --- | --- |
 | Back-end | Java 21, Spring Boot 4.0.8, Spring Security + JWT (JJWT 0.13.0), Spring Data JPA/Hibernate, Flyway, Bean Validation, SQLite |
-| Testes do back-end | JUnit 6, Mockito, testes de integração HTTP |
+| Testes e qualidade do back-end | JUnit 6, Mockito, testes de integração HTTP, JaCoCo (cobertura), SpotBugs (análise estática) |
 | Front-end | React 19, TypeScript, Vite 8, MUI 9, React Router 8, ESLint |
 
 ## Estrutura do repositório
@@ -150,16 +150,18 @@ RECEBIDO -> EM_PREPARO -> SAIU_PARA_ENTREGA -> ENTREGUE
 - `ENTREGUE` e `CANCELADO` são finais, e repetir o status atual é proibido.
 - Qualquer transição inválida devolve `409 Conflict`.
 
-## Testes
+## Testes e qualidade
 
 ```powershell
 cd backend
 .\mvnw test
 ```
 
-São 82 testes entre unitários (regras de status, serviços, JWT) e de integração (endpoints, segurança e persistência). A máquina de estados do status e a API foram desenvolvidas com TDD.
+São 83 testes entre unitários (regras de status, serviços, JWT) e de integração (endpoints, segurança e persistência). A máquina de estados do status e a API foram desenvolvidas com TDD.
 
 Ao rodar `mvnw test`, o JaCoCo gera o relatório de cobertura em `backend/target/site/jacoco/index.html` (a pasta `target/` não é versionada). Na última medição: 98% das instruções e 97% dos branches.
+
+Análise estática: `.\mvnw spotbugs:check` (na pasta `backend`) roda o SpotBugs, que na última execução fechou sem achados. Há uma única exclusão, documentada em `backend/spotbugs-exclude.xml`: o `ObjectMapper` injetado pelo Spring é um singleton compartilhado, então o alerta de exposição da referência é um falso positivo.
 
 O front-end não tem testes automatizados; a qualidade é verificada com `npm run lint` e `npm run build`.
 
